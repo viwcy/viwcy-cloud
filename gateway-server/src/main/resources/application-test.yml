@@ -1,0 +1,95 @@
+server:
+  port: 12000
+  tomcat:
+    uri-encoding: UTF-8
+
+spring:
+  application:
+    name: viwcy-gateway
+  cloud:
+    consul:
+      host: 127.0.0.1
+      port: 8500
+      discovery:
+        enabled: true
+        register: true
+        prefer-ip-address: true
+        health-check-interval: 10s
+        health-check-critical-timeout: 30s
+        health-check-path: /actuator/health
+        instance-id: ${spring.application.name}:${spring.cloud.client.ip-address}:${server.port}
+    gateway:
+      #网关是否开启服务注册和发现，默认false。重点：一但置为true，单个服务熔断和限流不生效
+      discovery:
+        locator:
+          enabled: false
+          #当访问http://127.0.0.1:12000/user-server/**，会被路由到http://127.0.0.1:12001/**
+      routes:
+        - id: user-server
+          #跳转目标
+          uri: http://127.0.0.1:12001
+          #路由规则
+          predicates:
+            - Path=/user-server/**
+          filters:
+            #如果不加该配置，当访问http://127.0.0.1:12000/user-server/**，会被路由到http://127.0.0.1:12001/user-server/**
+            - StripPrefix=1
+            #单个服务熔断机制
+            - name: Hystrix
+              args:
+                name: user-server
+                fallbackUri: 'forward:/fallback/user-server'
+        - id: goods-server
+          uri: http://127.0.0.1:12002
+          predicates:
+            - Path=/goods-server/**
+          filters:
+            - StripPrefix=1
+            - name: Hystrix
+              args:
+                name: goods-server
+                fallbackUri: 'forward:/fallback/goods-server'
+        - id: pay-server
+          uri: http://127.0.0.1:12003
+          predicates:
+            - Path=/pay-server/**
+          filters:
+            - StripPrefix=1
+            - name: Hystrix
+              args:
+                name: pay-server
+                fallbackUri: 'forward:/fallback/pay-server'
+      # 全局服务熔断，通过网关调用服务A，A宕机或未启动，则会进入服务熔断接口。
+      default-filters:
+        - name: Hystrix
+          args:
+            name: default
+            fallbackUri: 'forward:/fallback/default'
+
+#服务熔断时间
+hystrix:
+  command:
+    #默认全局服务熔断
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 3000
+    user-server:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 1500
+    goods-server:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 2000
+    pay-server:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 2000
+
+jwt:
+  passUrls: /user-server/user/register,/user-server/user/login,/domain/student/query

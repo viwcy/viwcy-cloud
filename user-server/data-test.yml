@@ -1,0 +1,24 @@
+#=================================================consul配置，config/user-server,test/data=====================================================================
+spring:
+  cloud:
+    alibaba:
+      seata:
+        tx-service-group: viwcy_cloud_tx_group_test
+    consul:
+      host: 127.0.0.1
+      port: 8500
+  redis:
+    host: 127.0.0.1
+    database: 0
+    port: 6379
+  datasource:
+    username: root
+    password: yaoyao0203
+    url: jdbc:mysql://localhost:3306/viwcy_user?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=GMT%2b8
+    driver-class-name: com.mysql.jdbc.Driver
+aliyun:
+  accessKeyId: LTAI5tRhCgaNNMqAR8QLu5ms
+  accessKeySecret: qXx3IMRCdLXluL32MDKaHirjvaBQqA
+  signName: ABC商场
+  registerTemplateCode: SMS_205878877
+  loginTemplateCode: SMS_164475193

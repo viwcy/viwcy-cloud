@@ -1,0 +1,23 @@
+spring:
+  profiles:
+    active: dev
+  application:
+    name: search-server
+  cloud:
+    consul:
+      discovery:
+        enabled: true
+        register: true
+        prefer-ip-address: true
+        health-check-interval: 10s
+        health-check-critical-timeout: 30s
+        health-check-path: /actuator/health
+        instance-id: ${spring.application.name}:${spring.cloud.client.ip-address}:${server.port}
+      config:
+        enabled: true
+        format: YAML
+        prefix: config
+        data-key: data
+        default-context: ${spring.application.name}
+        watch:
+          enabled: true

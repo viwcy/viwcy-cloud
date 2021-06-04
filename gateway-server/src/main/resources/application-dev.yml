@@ -1,0 +1,110 @@
+server:
+  port: 12000
+
+spring:
+  application:
+    name: gateway-server
+  cloud:
+    consul:
+      host: 127.0.0.1
+      port: 8500
+      discovery:
+        enabled: true
+        register: true
+        prefer-ip-address: true
+        health-check-interval: 10s
+        health-check-critical-timeout: 30s
+        health-check-path: /actuator/health
+        instance-id: ${spring.application.name}:${spring.cloud.client.ip-address}:${server.port}
+    gateway:
+      #网关是否开启服务注册和发现，默认false。重点：一但置为true，单个服务熔断和限流不生效
+      discovery:
+        locator:
+          enabled: false
+          #当访问http://127.0.0.1:12000/user-server/**，会被路由到http://127.0.0.1:12001/**
+      routes:
+        - id: user-server
+          #跳转目标，lb://形式配置集群或单节点都行，http://只能配置单节点
+          uri: lb://user-server/
+          #路由规则
+          predicates:
+            - Path=/user-server/**
+          filters:
+            #如果不加该配置，当访问http://127.0.0.1:12000/user-server/**，会被路由到http://127.0.0.1:12001/user-server/**
+            - StripPrefix=1
+            #单个服务熔断机制
+            - name: Hystrix
+              args:
+                name: user-server
+                fallbackUri: 'forward:/fallback/user-server'
+        - id: goods-server
+          uri: lb://goods-server/
+          predicates:
+            - Path=/goods-server/**
+          filters:
+            - StripPrefix=1
+            - name: Hystrix
+              args:
+                name: goods-server
+                fallbackUri: 'forward:/fallback/goods-server'
+        - id: pay-server
+          uri: lb://pay-server/
+          predicates:
+            - Path=/pay-server/**
+          filters:
+            - StripPrefix=1
+            - name: Hystrix
+              args:
+                name: pay-server
+                fallbackUri: 'forward:/fallback/pay-server'
+        - id: search-server
+          uri: lb://search-server/
+          predicates:
+            - Path=/search-server/**
+          filters:
+            - StripPrefix=1
+      # 全局服务熔断，通过网关调用服务A，A宕机或未启动，则会进入服务熔断接口。
+      default-filters:
+        - name: Hystrix
+          args:
+            name: default
+            fallbackUri: 'forward:/fallback/default'
+
+#==================================================================Hystrix服务熔断超时=======================================================================================
+hystrix:
+  #Hystrix线程池配置
+  threadpool:
+    default:
+      coreSize: 500
+      maxQueueSize: 2000
+      queueSizeRejectionThreshold: 1500
+  #Hystrix默认熔断和超时配置，【重点】超时优先级：全局熔断超时>局部熔断超时
+  command:
+    default:
+      execution:
+        timeout:
+          enabled: true
+        isolation:
+          strategy: THREAD
+          semaphore:
+            maxConcurrentRequests: 2000
+          thread:
+            timeoutInMilliseconds: 5000
+    #user-server服务熔断超时配置
+    user-server:
+      execution:
+        timeout:
+          enabled: true
+        isolation:
+          thread:
+            timeoutInMilliseconds: 3000
+    goods-server:
+      execution:
+        timeout:
+          enabled: true
+        isolation:
+          thread:
+            timeoutInMilliseconds: 3000
+
+jwt:
+  passUrls: /user-server/user/register,/user-server/user/login

@@ -1,0 +1,41 @@
+server:
+  port: 9001
+  tomcat:
+    uri-encoding: UTF-8
+
+spring:
+  application:
+    name: turbine
+  cloud:
+    consul:
+      host: 127.0.0.1
+      port: 8500
+      discovery:
+        enabled: true
+        register: true
+        prefer-ip-address: true
+        health-check-interval: 10s
+        health-check-critical-timeout: 30s
+        health-check-path: /actuator/health
+        instance-id: ${spring.application.name}:${spring.cloud.client.ip-address}:${server.port}
+
+turbine:
+  aggregator:
+    cluster-config: default
+  app-config: user-server,goods-server,pay-server #指定了需要收集监 控信息的服务名
+  cluster-name-expression: new String("default") #参数指定了集群名称为default
+  combine-host-port: true
+# true 同一主机上的服务通过host和port的组合来进行区分，默认为true
+# false 时 在本机测试时 监控中host集群数会为1了 因为本地host是一样的s
+
+hystrix:
+  dashboard:
+    proxy-stream-allow-list: "*"
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: ALWAYS

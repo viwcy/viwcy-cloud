@@ -1,0 +1,98 @@
+server:
+  port: 12001
+
+#spring:
+#  jackson:
+#    date-format: yyyy-MM-dd HH:mm:ss
+#    time-zone: GMT+8
+logging:
+  level:
+    com.viwcy.userserver.mapper: debug
+    com.viwcy.userserver.feign.handle: debug
+
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*Mapper.xml
+  global-config:
+    db-type: MYSQL
+  configuration:
+    # 是否开启自动驼峰命名规则映射:从数据库列名到Java属性驼峰命名的类似映射
+    map-underscore-to-camel-case: true
+    #懒加载
+    aggressive-lazy-loading: true
+    #如果查询结果中包含空值的列，则 MyBatis 在映射的时候，不会映射这个字段
+    call-setters-on-nulls: true
+
+rocketmq:
+  # 生产者配置
+  producer:
+    isOnOff: on
+    # 发送同一类消息的设置为同一个group，保证唯一，默认不需要设置，rocketmq会使用ip@pid(pid代表jvm名字)作为唯一标示
+    groupName: ${spring.application.name}
+    # 服务地址
+    namesrvAddr: 127.0.0.1:9876
+    # 消息最大长度 默认1024*4(4M)
+    maxMessageSize: 4096
+    # 发送消息超时时间,默认3000
+    sendMsgTimeout: 2000
+    # 发送消息失败重试次数，默认2
+    retryTimesWhenSendFailed: 2
+  consumer:
+    isOnOff: on
+    # 官方建议：确保同一组中的每个消费者订阅相同的主题。
+    groupName: ${spring.application.name}
+    namesrvAddr: 127.0.0.1:9876
+    # 接收该 Topic 下所有 Tag
+    topics: pay_topic~*;test_topic~*;
+    consumeThreadMin: 20
+    consumeThreadMax: 64
+    # 设置一次消费消息的条数，默认为1条
+    consumeMessageBatchMaxSize: 1
+#==============================================================Feign调用熔断=======================================================================
+#启用feign的服务熔断机制，使用OkHttpClient连接池
+feign:
+  httpclient:
+    enabled: false
+  hystrix:
+    enabled: true
+  okhttp:
+    enabled: true
+#【重点】都是hystrix和ribbon组合配置，timeoutInMilliseconds和ReadTimeout，以小值为熔断标准。
+hystrix:
+  threadpool:
+    default:
+      coreSize: 50
+      maxQueueSize: 2000
+      queueSizeRejectionThreshold: 1500
+  command:
+    default:
+      execution:
+        timeout:
+          enabled: true
+        isolation:
+          strategy: THREAD
+          semaphore:
+            maxConcurrentRequests: 1000
+          thread:
+            timeoutInMilliseconds: 3000
+    PayOrderHandle#findOrderByNo(String):
+      execution:
+        timeout:
+          enabled: true # 开启服务熔断，重点，一定要加该配置，否则Feign的熔断不生效
+        isolation:
+          thread:
+            timeoutInMilliseconds: 1000
+# 全局负载均衡
+ribbon:
+  OkToRetryOnAllOperations: false #对所有操作请求都进行重试,默认false
+  ReadTimeout: 2000   #负载均衡超时时间，默认值5000（服务链接成功，长时间读取阻塞，会出现java.net.SocketTimeoutException: timeout，进行服务熔断）
+  ConnectTimeout: 500 #ribbon请求连接的超时时间，默认值2000，网络比较好的情况下，尽量改小一点
+  MaxAutoRetries: 0     #对当前实例的重试次数，默认0
+  MaxAutoRetriesNextServer: 0 #对切换实例的重试次数，默认1
+# user-server负载均衡
+pay-server:
+  ribbon:
+    OkToRetryOnAllOperations: false
+    ReadTimeout: 1000
+    ConnectTimeout: 500
+    MaxAutoRetries: 0
+    MaxAutoRetriesNextServer: 0
