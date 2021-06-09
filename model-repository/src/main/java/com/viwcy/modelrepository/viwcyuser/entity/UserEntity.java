@@ -9,14 +9,8 @@ import com.viwcy.modelrepository.entity.AbstractBaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * @Description TODO
@@ -30,7 +24,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @TableName("user")
-public class UserEntity extends AbstractBaseEntity<UserEntity> implements Serializable, UserDetails {
+public class UserEntity extends AbstractBaseEntity<UserEntity> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -47,43 +41,5 @@ public class UserEntity extends AbstractBaseEntity<UserEntity> implements Serial
     @Override
     protected Serializable pkVal() {
         return this.id;
-    }
-
-    @TableField(exist = false)
-    private List<RoleEntity> roles;
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        List<RoleEntity> roles = this.getRoles();
-        for (RoleEntity role : roles) {
-            authorities.add(new SimpleGrantedAuthority(role.getRoleName()));
-        }
-        return authorities;
-    }
-
-    @Override
-    public String getUsername() {
-        return this.userName;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
     }
 }
