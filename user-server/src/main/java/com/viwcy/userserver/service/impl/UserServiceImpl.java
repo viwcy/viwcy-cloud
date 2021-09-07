@@ -170,7 +170,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
             if (sendSmsResponse.getCode() != null && sendSmsResponse.getCode().equals("OK")) {
                 return true;
             }
-            return false;
         } catch (ClientException e) {
             e.printStackTrace();
             log.error("短信发送异常，原因：{}", e.getMessage());
