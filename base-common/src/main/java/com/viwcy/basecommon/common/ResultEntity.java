@@ -64,6 +64,10 @@ public class ResultEntity<T> implements Serializable {
         return new ResultEntity(ResultCode.RESULT_FAIL.getCode(), message, null);
     }
 
+    public static <T> ResultEntity<T> fail(int code, String message) {
+        return new ResultEntity(code, message, null);
+    }
+
     public static <T> ResultEntity<T> hint(String message) {
         return new ResultEntity(ResultCode.RESULT_HINT.getCode(), message, null);
     }
