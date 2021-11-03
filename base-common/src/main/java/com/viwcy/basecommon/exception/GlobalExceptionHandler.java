@@ -1,7 +1,6 @@
 package com.viwcy.basecommon.exception;
 
 import com.viwcy.basecommon.common.ResultEntity;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.javassist.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +31,6 @@ import javax.servlet.http.HttpServletRequest;
  * Version 0.0.1.RELEASE
  */
 @RestControllerAdvice
-@Slf4j
 public class GlobalExceptionHandler {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
